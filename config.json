@@ -1,0 +1,24 @@
+{
+  "keyword": "clarity",
+  "wake_phrases": [
+    "hey clarity",
+    "hello clarity",
+    "what's up clarity"
+  ],
+  "responses": [
+    "Hey there! How can Clarity help?",
+    "Hello! Ready when you are.",
+    "What's up? I'm listening.",
+    "Hi! What can I do for you today?"
+  ],
+  "settings": {
+    "input_device_index": null,
+    "language_code": "en-US",
+    "energy_threshold": 4000,
+    "phrase_time_limit": 3,
+    "ambient_duration": 1.5,
+    "tts_rate": 150,
+    "tts_volume": 0.9
+  }
+}
+

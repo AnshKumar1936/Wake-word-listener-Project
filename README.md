@@ -1,73 +1,70 @@
-# Wake Word Listener - "Clarity" Detection
+# Clarity Listener
 
-A simple Python script that listens for the wake word "Clarity" and speaks a greeting when detected.
+## Version Overview
 
-## What It Does
+**v0.1 (Classic “Hey Clarity”)**
+- Single hard-coded wake word and two canned greetings.
+- Configuration required editing `wake_word_listener.py`.
+- Basic loop with minimal error handling.
 
-- Listens continuously for the word **"Clarity"** (case-insensitive)
-- When detected, speaks a random greeting: "How can I help you?" or "Hi buddy"
-- Runs locally, no cloud APIs required
+**v0.2 (Config-Driven Upgrade)**
+- Loads wake phrases, keyword, responses, and audio settings from `config.json`.
+- Adds keyword-based matching, friendlier mic/API errors, and graceful Ctrl+C shutdown.
+- Uses a `main()` entry point so the module can be imported safely.
+
+## Changes v0.1 → v0.2
+
+- Config moved into `config.json` (wake phrases, responses, mic/audio tuning).
+- Added keyword matching, clearer mic/API errors, and clean Ctrl+C exit.
+- Script now wraps logic in `main()` so it can be imported without auto-running.
 
 ## Requirements
 
-- Python 3.7+
-- Microphone
+- Python 3.8+
+- Microphone with working drivers
+- Internet access (Google Speech Recognition)
 
-
-## Installation
+## Install & Run
 
 ```bash
 pip install -r requirements.txt
-```
-
-## Usage
-
-```bash
 python wake_word_listener.py
 ```
 
-**What happens:**
-1. Script calibrates microphone (~2 seconds)
-2. Starts listening for "Clarity"
-3. When you say "Clarity", it speaks a greeting
-4. Press `Ctrl+C` to stop
+## Configuration (`config.json`)
 
-**Output:** All output appears in your terminal window. You'll also hear the greeting through your speakers.
-
-## Configuration
-
-Edit `wake_word_listener.py` to change:
-
-```python
-listener = WakeWordListener(
-    wake_word="clarity",        
-    energy_threshold=4000       
-)
+```json
+{
+  "keyword": "clarity",
+  "wake_phrases": ["hey clarity", "hello clarity"],
+  "responses": ["Hi there!", "How can I help?"],
+  "settings": {
+    "input_device_index": null,
+    "language_code": "en-US",
+    "energy_threshold": 4000,
+    "phrase_time_limit": 5,
+    "ambient_duration": 2,
+    "tts_rate": 150,
+    "tts_volume": 0.9
+  }
+}
 ```
 
-## Troubleshooting
+- `keyword`: Base word that should fire even inside longer sentences (e.g., “tell me the date clarity”).
+- `wake_phrases`: Any phrases that should trigger the listener (case-insensitive).
+- `responses`: Possible TTS replies—one is chosen randomly per trigger.
+- `input_device_index`: Set to the microphone index from `sr.Microphone.list_microphone_names()`. Leave `null` for default.
+- `language_code`: Passed to Google Speech Recognition (e.g., `en-US`, `es-ES`).
+- `energy_threshold`: Tune sensitivity. Lower → more sensitive.
+- `phrase_time_limit`: Max seconds to capture each utterance.
+- `ambient_duration`: Seconds spent sampling ambient noise for calibration.
+- `tts_rate` / `tts_volume`: Controls pyttsx3 speaking style.
 
-**"No module named 'pyaudio'"**
-- Windows: `pip install pipwin && pipwin install pyaudio`
-- Linux: Install system dependencies first (see Requirements)
+Restart the script after editing the config.
 
-**"Could not find a microphone"**
-- Check microphone is connected and enabled
-- Windows: Settings > Privacy > Microphone > Allow apps access
+## Limitations
 
-**Wake word not detected**
-- Speak clearly and ensure "Clarity" is in your phrase
-- Try saying "Hey Clarity" or "Hello Clarity"
-- Lower `energy_threshold` if your voice is quiet
+- Tested on Windows 11 with Python 3.11 and the default system microphone.
+- Uses Google’s free Speech Recognition endpoint; offline recognition isn’t included.
+- No background hotword detection thread—main loop is blocking.
 
-## Project Structure
-
-```
-├── wake_word_listener.py    # Main script
-├── requirements.txt          # Dependencies
-└── README.md                # This file
-```
-
-## License
-
-Provided as-is for educational purposes.
