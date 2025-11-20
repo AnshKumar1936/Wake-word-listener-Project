@@ -17,6 +17,7 @@
     "energy_threshold": 4000,
     "phrase_time_limit": 3,
     "ambient_duration": 1.5,
+    "enable_tts": true,
     "tts_rate": 150,
     "tts_volume": 0.9
   }

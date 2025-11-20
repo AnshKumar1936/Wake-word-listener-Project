@@ -1,5 +1,7 @@
 # Clarity Listener
 
+Simple, single-threaded wake-word demo for experimenting with “Clarity” phrases. This is a learning/testing tool only—it blocks while speaking, relies on Google’s API, and is not suitable for production wake-word use.
+
 ## Version Overview
 
 **v0.1 (Classic “Hey Clarity”)**
@@ -44,6 +46,7 @@ python wake_word_listener.py
     "energy_threshold": 4000,
     "phrase_time_limit": 5,
     "ambient_duration": 2,
+    "enable_tts": true,
     "tts_rate": 150,
     "tts_volume": 0.9
   }
@@ -58,7 +61,9 @@ python wake_word_listener.py
 - `energy_threshold`: Tune sensitivity. Lower → more sensitive.
 - `phrase_time_limit`: Max seconds to capture each utterance.
 - `ambient_duration`: Seconds spent sampling ambient noise for calibration.
+- `enable_tts`: `false` turns off spoken playback but still logs responses.
 - `tts_rate` / `tts_volume`: Controls pyttsx3 speaking style.
+- Logs show detected transcription, wake events, and generated responses for debugging.
 
 Restart the script after editing the config.
 
@@ -67,4 +72,10 @@ Restart the script after editing the config.
 - Tested on Windows 11 with Python 3.11 and the default system microphone.
 - Uses Google’s free Speech Recognition endpoint; offline recognition isn’t included.
 - No background hotword detection thread—main loop is blocking.
+
+## Future Improvements
+
+- Multi-threaded listening so TTS doesn’t pause detection.
+- Dedicated wake-word/VAD engine instead of full transcription.
+- Integrated voice activity detection for better timing and power use.
 

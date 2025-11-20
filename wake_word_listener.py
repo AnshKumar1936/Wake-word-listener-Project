@@ -1,4 +1,5 @@
 import json
+import logging
 import random
 from pathlib import Path
 from typing import Any, Dict, List
@@ -7,6 +8,10 @@ import pyttsx3
 import speech_recognition as sr
 
 CONFIG_PATH = Path(__file__).with_name("config.json")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
+)
+logger = logging.getLogger("clarity-listener")
 
 
 def load_config(path: Path) -> Dict[str, Any]:
@@ -41,6 +46,7 @@ class WakeWordListener:
         self.energy_threshold = settings.get("energy_threshold", 4000)
         self.phrase_time_limit = settings.get("phrase_time_limit", 5)
         self.ambient_duration = settings.get("ambient_duration", 2)
+        self.enable_tts = settings.get("enable_tts", True)
 
         self.recognizer = sr.Recognizer()
         self.recognizer.energy_threshold = self.energy_threshold
@@ -48,23 +54,26 @@ class WakeWordListener:
 
         # Initialize TTS
         self.tts = None
-        try:
-            self.tts = pyttsx3.init()
-            self.tts.setProperty("rate", settings.get("tts_rate", 150))
-            self.tts.setProperty("volume", settings.get("tts_volume", 0.9))
-        except Exception as exc:
-            print(f"TTS initialization failed: {exc}")
+        if self.enable_tts:
+            try:
+                self.tts = pyttsx3.init()
+                self.tts.setProperty("rate", settings.get("tts_rate", 150))
+                self.tts.setProperty("volume", settings.get("tts_volume", 0.9))
+            except Exception as exc:
+                logger.error("TTS initialization failed: %s", exc)
+        else:
+            logger.info("TTS disabled via configuration.")
 
     def setup_microphone(self) -> bool:
         """Initialize and calibrate microphone."""
         try:
             self.microphone = sr.Microphone(device_index=self.input_device_index)
         except OSError as exc:
-            print(f"Microphone unavailable: {exc}")
-            print("Verify your input device index in config.json.")
+            logger.error("Microphone unavailable: %s", exc)
+            print("Microphone unavailable. Verify your input device index in config.json.")
             return False
         except Exception as exc:
-            print(f"Unexpected microphone error: {exc}")
+            logger.error("Unexpected microphone error: %s", exc)
             return False
 
         print("Calibrating microphone...")
@@ -74,7 +83,7 @@ class WakeWordListener:
                     source, duration=self.ambient_duration
                 )
         except Exception as exc:
-            print(f"Calibration failed: {exc}")
+            logger.error("Calibration failed: %s", exc)
             return False
 
         print("Microphone ready!\n")
@@ -88,33 +97,38 @@ class WakeWordListener:
                     source, timeout=None, phrase_time_limit=self.phrase_time_limit
                 )
         except Exception as exc:
-            print(f"Listening error: {exc}")
+            logger.error("Listening error: %s", exc)
             return False
 
         try:
             text = self.recognizer.recognize_google(audio, language=self.language_code)
             text = text.lower()
+            logger.info("Detected audio: %s", text)
             print(f"Heard: {text}")
             if any(phrase in text for phrase in self.wake_phrases):
+                logger.info("Wake phrase matched: %s", text)
                 return True
             if self.keyword and self.keyword in text:
+                logger.info("Keyword matched within: %s", text)
                 return True
             return False
         except sr.UnknownValueError:
             return False
         except sr.RequestError as exc:
-            print(f"Recognition error (network/API): {exc}")
+            logger.error("Recognition error (network/API): %s", exc)
         except Exception as exc:
-            print(f"Recognition failed: {exc}")
+            logger.error("Recognition failed: %s", exc)
 
         return False
 
     def speak_greeting(self):
         """Speak a random greeting."""
         greeting = random.choice(self.responses)
+        logger.info("Generated response: %s", greeting)
         print(f"Speaking: {greeting}")
 
-        if not self.tts:
+        if not self.enable_tts or not self.tts:
+            logger.info("TTS disabled or unavailable. Response logged only.")
             print(f"TTS unavailable. Message: {greeting}")
             return
 
@@ -123,6 +137,7 @@ class WakeWordListener:
             self.tts.runAndWait()
             print("✓ Greeting spoken")
         except Exception as exc:
+            logger.error("TTS error: %s. Message: %s", exc, greeting)
             print(f"TTS error: {exc}. Message: {greeting}")
 
     def run(self):
@@ -139,6 +154,7 @@ class WakeWordListener:
         try:
             while True:
                 if self.listen_for_wake_word():
+                    logger.info("Wake workflow triggered.")
                     print("\n" + "=" * 50)
                     print("Wake phrase detected. Executing action...")
                     print("=" * 50 + "\n")
@@ -147,8 +163,10 @@ class WakeWordListener:
                     print("Action completed. Listening again...")
                     print("=" * 50 + "\n")
         except KeyboardInterrupt:
+            logger.info("Listener stopped by user.")
             print("\nShutting down Clarity Listener...")
         except Exception as exc:
+            logger.error("Listener stopped due to error: %s", exc)
             print(f"\nListener stopped due to error: {exc}")
 
 
